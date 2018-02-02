@@ -10,10 +10,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180201194425) do
+ActiveRecord::Schema.define(version: 20180202193105) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "businesses", force: :cascade do |t|
+    t.string "name"
+    t.string "org_id"
+    t.string "desc1"
+    t.string "desc2"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
 
   create_table "transactions", force: :cascade do |t|
     t.date "date"
@@ -24,6 +33,8 @@ ActiveRecord::Schema.define(version: 20180201194425) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.bigint "business_id"
+    t.index ["business_id"], name: "index_transactions_on_business_id"
     t.index ["user_id"], name: "index_transactions_on_user_id"
   end
 
@@ -33,5 +44,6 @@ ActiveRecord::Schema.define(version: 20180201194425) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "transactions", "businesses"
   add_foreign_key "transactions", "users"
 end

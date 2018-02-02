@@ -1,10 +1,12 @@
 require 'rest-client'
 require 'JSON'
 require 'nokogiri'
+require 'uri'
 
 class Transaction < ApplicationRecord
 
   belongs_to :user
+  belongs_to :business
 
   def self.test_api(start, fin)
     self.all[start..fin].inject([]) do |acc, transaction|
@@ -14,46 +16,131 @@ class Transaction < ApplicationRecord
 
   def format_name
     search_name = self.description
-    self.description.gsub(/.com|LLC|\bsq\b|\bsqu\b|\bcorp\b|\bcorp.\b|\binc.\b|\binc\b|\bco\b|\bco.\b/i, "")
+    self.description.gsub(/.com|\b(LLC|sq|squ|corp|corp.|inc.|inc|co|co.)\b/i, "")
+  end
+
+  def initiate_org_search
+    if self.business_id != nil
+      self.query_name_api
+    else
+      puts "already matched"
+    end
+
   end
 
   def query_name_api
+
+    #if this description matches a hard-coded dictionary entry, return that Instead
+      #united tx => united airlines => United continental holdings, with ID.
+      #go straight to create entity.
+
     begin
       api_response = RestClient.get("https://www.opensecrets.org/api/?method=getOrgs&org=#{self.format_name}&apikey=#{Rails.application.secrets.api_key}")
     rescue RestClient::ExceptionWithResponse => e
       api_response = e.response
     end
     if api_response == "Resource not found or query was less than three characters"
-      [self.format_name, "no match"]
+      self.no_match
     else
       self.api_match?(Nokogiri::XML(api_response))
     end
   end
 
   def api_match?(api_response)
+
     possibilities = []
     api_response.xpath("//response").children.each do |org|
       if org.attr('orgname').match(/\b(#{self.format_name})\b/i)
         possibilities << [org.attr('orgname'), org.attr('orgid')]
       end
     end
-    possibilities
-  end
 
-  def no_match
-    puts "no match"
-  end
-
-  def multiple_matches
-    resp = Nokogiri::HTML(RestClient.get("https://www.google.com/search?as_q=&as_epq=#{self.format_name}&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs"))
-    unless !!resp.css("cite")[0]
+    if possibilities.length = 0
       self.no_match
-    else
-      org_id = resp.css("cite")[0].text.match(/id=.*/)[0]
-      org_id.gsub(/id=/, "")
+    elsif possibilities.length = 1
+      self.single_match(possibilities[0])
+    elsif possibilities.length > 1
+      self.google_search_matches
     end
 
   end
+
+  def no_match
+    self.business_id = 1
+    self.save
+
+    Transaction.associate_all_matching_transactions_with_business(self.description, 1)
+
+    # matching_transactions = Transaction.where(description: self.description)
+    #
+    # matching_transactions.each do |transaction|
+    #   transaction.business_id = 1
+    #   transaction.save
+    # end
+
+  end
+
+  def single_match(match_array)
+
+    newBiz = Business.create(name: match_array[0].strip, org_id: match_array[1])
+    self.business = newBiz
+    self.save
+
+    Transaction.associate_all_matching_transactions_with_business(self.description, newBiz.id)
+
+    #create entity object with the id
+    #associate self with that entity
+    #associate all matching transactions with that entity.
+    #kick off scraping in the Entity model
+  end
+
+  def self.associate_all_matching_transactions_with_business(t_name, biz_id)
+    matching_transactions = Transaction.where(description: t_name)
+
+    matching_transactions.each do |transaction|
+      transaction.business_id = biz_id
+      transaction.save
+    end
+
+  end
+
+
+  def google_search_matches
+    #working
+    #https://www.google.com/search?as_q=&as_epq=verizon&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images
+    # resp = Nokogiri::HTML(RestClient.get("https://www.google.com/search?as_q=&as_epq=#{self.format_name}&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images"))
+    resp = RestClient.get("https://www.googleapis.com/customsearch/v1?q=#{URI.escape(self.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(self.format_name)}&key=#{Rails.application.secrets.google_api_key}")
+    puts "https://www.googleapis.com/customsearch/v1?q=#{URI.escape(self.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(self.format_name)}&key=#{Rails.application.secrets.google_api_key}"
+    byebug
+    parsed = JSON.parse(resp)
+
+    if parsed["queries"]["request"][0]["totalResults"] "]== "0"
+      puts "no match"
+    else
+      puts parsed["items"][0]["title"]
+      puts parsed["items"][0]["link"]
+    end
+
+
+    # unless !!resp.css("cite")[0]
+    #   self.no_match
+    # else
+      # puts resp.css("div.obp div.med").text
+      #
+      #
+      # #
+      # org_name = resp.css("h3.r a")[0].text
+      # org_id = resp.css("cite")[0].text.match(/id=.*/)[0]
+      # org_id.gsub(/id=/, "")
+      # [org_name.gsub(/:.*/, ""), org_id.gsub(/id=/, "")]
+
+
+      #self.single_match([org_name, org_id.gsub(/id=/, "")])
+    # end
+
+  end
+
+end
 
 
 #handle more than one possibility
@@ -74,8 +161,7 @@ class Transaction < ApplicationRecord
 
 #handle how fast this is happening and limits.  I think it has to be one month at a time.  Gives you data to display initially as it loads.
 
-#set up google custom search engine and register for api key.
-
+##################################
 
 #   1. format the name
 #   2. query the API with the name
@@ -86,4 +172,4 @@ class Transaction < ApplicationRecord
 #   5.Go to website, scrape website.
 #   6. From website XML, create "Cycle objects" belonging to the organization.
 
-end
+#end
