@@ -9,7 +9,7 @@ class UsersController < ApplicationController
     #then include nested business
     me = User.find(1)
     @transactions = me.matched_transactions
-    render json: @transactions
+    render json: @transactions.order(date: :desc)
 
   end
 
