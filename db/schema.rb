@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180202193105) do
+ActiveRecord::Schema.define(version: 20180205034433) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -22,6 +22,19 @@ ActiveRecord::Schema.define(version: 20180202193105) do
     t.string "desc2"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "cycles", force: :cascade do |t|
+    t.string "year"
+    t.integer "total"
+    t.integer "dem_amount"
+    t.integer "rep_amount"
+    t.integer "dem_pct"
+    t.integer "rep_pct"
+    t.bigint "business_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_cycles_on_business_id"
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -44,6 +57,7 @@ ActiveRecord::Schema.define(version: 20180202193105) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "cycles", "businesses"
   add_foreign_key "transactions", "businesses"
   add_foreign_key "transactions", "users"
 end
