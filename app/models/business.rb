@@ -3,6 +3,28 @@ class Business < ApplicationRecord
   has_many :cycles
   after_create :get_2016_and_2018_cycles
 
+
+  def total_dem
+    self.cycles[0].dem_amount + self.cycles[1].dem_amount
+  end
+
+  def total_rep
+    self.cycles[0].rep_amount + self.cycles[1].rep_amount
+  end
+
+  def total_dem_pct
+    (self.total_dem.to_f / self.total_amount.to_f).round(2)
+  end
+
+  def total_rep_pct
+    (self.total_rep.to_f  / self.total_amount.to_f).round(2)
+  end
+
+  def total_amount
+    self.total_dem + self.total_rep
+  end
+
+
   def self.populate_cycles
 
     self.all.each do |biz|
@@ -12,7 +34,6 @@ class Business < ApplicationRecord
 
       end
   end
-
 
 
 
