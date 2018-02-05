@@ -6,7 +6,7 @@ require 'uri'
 class Transaction < ApplicationRecord
 
   belongs_to :user
-  belongs_to :business
+  belongs_to :business, optional: true
 
   def self.test_api(start, fin)
     self.all[start..fin].inject([]) do |acc, transaction|
@@ -14,18 +14,50 @@ class Transaction < ApplicationRecord
     end
   end
 
+  def self.associate_all_matching_month_transactions(t_name, biz_id, query_year, query_month)
+    my_transactions = Transaction.where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
+    matching_transactions = my_transactions.where(description: t_name)
+
+    matching_transactions.each do |transaction|
+      transaction.business_id = biz_id
+      transaction.save
+    end
+
+  end
+
+  def self.batch_analyze_by_month(query_year, query_month)
+    my_transactions = Transaction.where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
+
+    my_transactions.each do |transaction|
+      transaction.initiate_org_search
+
+    end
+    #n|
+    #   Transaction.associate_all_matching_transactions_with_business(transaction.description, transactino.business_id)
+    # end
+
+  end
+
   def format_name
-    search_name = self.description
-    self.description.gsub(/.com|\b(LLC|sq|squ|corp|corp.|inc.|inc|co|co.)\b/i, "")
+    self.description.gsub(/.com|\b(LLC|sq|squ|corp|corp.|inc.|inc|co|co.)\b/i, "").encode(Encoding.find('ASCII'), invalid: :replace, undef: :replace, replace: "")
   end
 
   def initiate_org_search
-    if self.business_id != nil
+
+    if self.business_id == nil
       self.query_name_api
     else
       puts "already matched"
     end
 
+  end
+
+  def check_hardcode_dictionary
+    my_dictionary = {
+      "J.Crew": "J Crew",
+      "Stop & Shop": "Ahold Delhaize",
+      "United Tx": "United Continental Holdings"
+    }
   end
 
   def query_name_api
@@ -55,9 +87,9 @@ class Transaction < ApplicationRecord
       end
     end
 
-    if possibilities.length = 0
+    if possibilities.length == 0
       self.no_match
-    elsif possibilities.length = 1
+    elsif possibilities.length == 1
       self.single_match(possibilities[0])
     elsif possibilities.length > 1
       self.google_search_matches
@@ -69,7 +101,7 @@ class Transaction < ApplicationRecord
     self.business_id = 1
     self.save
 
-    Transaction.associate_all_matching_transactions_with_business(self.description, 1)
+    Transaction.associate_all_matching_month_transactions(self.description, 1, self.date.year, self.date.month)
 
     # matching_transactions = Transaction.where(description: self.description)
     #
@@ -82,15 +114,13 @@ class Transaction < ApplicationRecord
 
   def single_match(match_array)
 
-    newBiz = Business.create(name: match_array[0].strip, org_id: match_array[1])
+    #find or create_by in the future?
+    newBiz = Business.find_or_create_by(name: match_array[0].strip, org_id: match_array[1])
     self.business = newBiz
     self.save
 
-    Transaction.associate_all_matching_transactions_with_business(self.description, newBiz.id)
+    Transaction.associate_all_matching_month_transactions(self.description, newBiz.id, self.date.year, self.date.month)
 
-    #create entity object with the id
-    #associate self with that entity
-    #associate all matching transactions with that entity.
     #kick off scraping in the Entity model
   end
 
@@ -110,15 +140,15 @@ class Transaction < ApplicationRecord
     #https://www.google.com/search?as_q=&as_epq=verizon&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images
     # resp = Nokogiri::HTML(RestClient.get("https://www.google.com/search?as_q=&as_epq=#{self.format_name}&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images"))
     resp = RestClient.get("https://www.googleapis.com/customsearch/v1?q=#{URI.escape(self.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(self.format_name)}&key=#{Rails.application.secrets.google_api_key}")
-    puts "https://www.googleapis.com/customsearch/v1?q=#{URI.escape(self.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(self.format_name)}&key=#{Rails.application.secrets.google_api_key}"
-    byebug
-    parsed = JSON.parse(resp)
 
-    if parsed["queries"]["request"][0]["totalResults"] "]== "0"
+    parsed = JSON.parse(resp)
+    if parsed["queries"]["request"][0]["totalResults"]== "0"
+      self.no_match
       puts "no match"
     else
-      puts parsed["items"][0]["title"]
-      puts parsed["items"][0]["link"]
+      puts parsed["items"][0]["title"].gsub(/:.*/, "")
+      puts parsed["items"][0]["link"].gsub(/http.*id=|&cycle=.*/, "")
+      self.single_match([parsed["items"][0]["title"].gsub(/:.*/, ""), parsed["items"][0]["link"].gsub(/http.*id=|&cycle=.*/, "") ])
     end
 
 
