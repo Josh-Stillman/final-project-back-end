@@ -3,6 +3,9 @@ class Business < ApplicationRecord
   has_many :cycles
   after_create :get_2016_and_2018_cycles
 
+  def user_total_spending(user_id)
+    self.transactions.where(user_id: user_id).sum(:amount)
+  end
 
   def total_dem
     self.cycles[0].dem_amount + self.cycles[1].dem_amount

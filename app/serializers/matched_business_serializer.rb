@@ -1,5 +1,5 @@
 class MatchedBusinessSerializer < ActiveModel::Serializer
-  attributes :org_id, :name, :total_dem, :total_rep, :total_dem_pct, :total_rep_pct
+  attributes :org_id, :name, :total_dem, :total_rep, :total_dem_pct, :total_rep_pct, :user_total_spending
 
   def total_dem
     object.total_dem
@@ -15,6 +15,10 @@ class MatchedBusinessSerializer < ActiveModel::Serializer
 
   def total_rep_pct
     object.total_rep_pct
+  end
+
+  def user_total_spending
+    object.user_total_spending(@instance_options[:user_id])
   end
 
 end

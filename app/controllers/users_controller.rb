@@ -9,12 +9,18 @@ class UsersController < ApplicationController
     #then include nested business
     me = User.find(1)
     @transactions = me.matched_transactions
-    render json: @transactions.order(date: :desc)
+    render json: @transactions.order(date: :desc), user_id: 1
 
   end
 
   def unmatched_transactions
 
+  end
+
+  def businesses
+    me = User.find(1)
+    @businesses = me.businesses
+    render json: @businesses.where.not(id: 1), each_serializer: MatchedBusinessSerializer, user_id: 1
   end
 
 

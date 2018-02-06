@@ -3,4 +3,5 @@ Rails.application.routes.draw do
 
   get 'users/matched', to: "users#matched_transactions"
   get 'users/unmatched', to: "users#unmatched_transactions"
+  get 'users/businesses', to: "users#businesses"
 end
