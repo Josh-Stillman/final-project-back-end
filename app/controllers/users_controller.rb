@@ -23,5 +23,10 @@ class UsersController < ApplicationController
     render json: @businesses.where.not(id: 1), each_serializer: MatchedBusinessSerializer, user_id: 1
   end
 
+  def show
+    @user = User.find(params[:id])
+    render json: @user, each_serializer: UserSerializer
+  end
+
 
 end
