@@ -4,7 +4,9 @@ class Business < ApplicationRecord
   after_create :get_2016_and_2018_cycles
 
   def user_total_spending(user_id)
-    self.transactions.where(user_id: user_id).sum(:amount)
+    @user = User.find(user_id)
+    self.transactions.where(user_id: user_id).where(date: @user.oldest_month..@user.newest_month).sum(:amount)
+
   end
 
   def total_dem
