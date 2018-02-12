@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :transactions
   has_many :businesses, -> { distinct }, through: :transactions
+  has_secure_password
 
   def matched_transactions
     Transaction.where(user: self).where.not(business_id: nil).where.not(business_id: 1).where(date: self.oldest_month..self.newest_month)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20180205160610) do
+ActiveRecord::Schema.define(version: 20180209163146) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -57,6 +57,7 @@ ActiveRecord::Schema.define(version: 20180205160610) do
     t.datetime "updated_at", null: false
     t.date "newest_month"
     t.date "oldest_month"
+    t.string "password_digest"
   end
 
   add_foreign_key "cycles", "businesses"

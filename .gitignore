@@ -16,3 +16,6 @@
 .byebug_history
 *.csv
 secrets.yml
+
+# Ignore application configuration
+/config/application.yml
