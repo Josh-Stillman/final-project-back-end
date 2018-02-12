@@ -1,6 +1,8 @@
 class User < ApplicationRecord
   has_many :transactions
   has_many :businesses, -> { distinct }, through: :transactions
+
+  validates :name, uniqueness: true, presence: true
   has_secure_password
 
   def matched_transactions
@@ -24,23 +26,32 @@ class User < ApplicationRecord
   end
 
   def next_month_to_analyze
-    self.remaining_months_to_analyze > 0 ? self.oldest_month.prev_month : nil
+    if self.transactions != []
+      self.remaining_months_to_analyze > 0 ? self.oldest_month.prev_month : nil
+    end
   end
 
   def remaining_months_to_analyze
-    date1 = self.transactions.order(date: :asc).first.date.beginning_of_month
-    date2 = self.oldest_month
-    remaining_months = (date2.year * 12 + date2.month) - (date1.year * 12 + date1.month)
+    if self.transactions != []
+      date1 = self.transactions.order(date: :asc).first.date.beginning_of_month
+      date2 = self.oldest_month
+      remaining_months = (date2.year * 12 + date2.month) - (date1.year * 12 + date1.month)
+    end
   end
 
   def oldest_transaction_month
-    self.transactions.order(date: :asc).first.date.beginning_of_month
+    if self.transactions != []
+      self.transactions.order(date: :asc).first.date.beginning_of_month
+    end
+
   end
 
   def months_analyzed
-    date1 = self.oldest_month
-    date2 = self.newest_month
-    remaining_months = (date2.year * 12 + date2.month) - (date1.year * 12 + date1.month) + 1
+    if self.transactions != []
+      date1 = self.oldest_month
+      date2 = self.newest_month
+      remaining_months = (date2.year * 12 + date2.month) - (date1.year * 12 + date1.month) + 1
+    end
   end
   #### - oldest date is Date.parse("November 2017")
   ## newest is Date.parse("November 2017").end_of_month
