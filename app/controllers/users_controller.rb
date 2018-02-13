@@ -9,12 +9,23 @@ class UsersController < ApplicationController
     #then include nested business
     me = User.find(params[:id])
     @transactions = me.matched_transactions
-    render json: @transactions.order(date: :desc), user_id: 1
+    render json: @transactions.order(date: :desc), user_id: params[:id]
 
   end
 
   def unmatched_transactions
+    me = User.find(params[:id])
+    @transactions = me.matched_untransactions
+    render json: @transactions.order(date: :desc), user_id: params[:id]
+  end
 
+  def load_new_month
+    me = User.find(params[:id])
+    if me.load_new_month
+      render json: {success: true}
+    else
+      render json: {success: false}
+    end
   end
 
   def businesses

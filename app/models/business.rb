@@ -1,3 +1,5 @@
+require 'nokogiri'
+
 class Business < ApplicationRecord
   has_many :transactions
   has_many :cycles
@@ -10,23 +12,34 @@ class Business < ApplicationRecord
   end
 
   def total_dem
-    self.cycles[0].dem_amount + self.cycles[1].dem_amount
+    unless self.cycles == []
+      self.cycles[0].dem_amount + self.cycles[1].dem_amount
+    end
+
   end
 
   def total_rep
+    unless self.cycles == []
     self.cycles[0].rep_amount + self.cycles[1].rep_amount
+    end
   end
 
   def total_dem_pct
+    unless self.cycles == []
     (self.total_dem.to_f / self.total_amount.to_f).round(2)
+    end
   end
 
   def total_rep_pct
+    unless self.cycles == []
     (self.total_rep.to_f  / self.total_amount.to_f).round(2)
+    end
   end
 
   def total_amount
+    unless self.cycles == []
     self.total_dem + self.total_rep
+    end
   end
 
 
@@ -46,6 +59,11 @@ class Business < ApplicationRecord
     resp = Nokogiri::HTML(RestClient.get("https://www.opensecrets.org/orgs/totals.php?id=#{self.org_id}"))
     row_18 = resp.css(".datadisplay tr")[1]
     row_16 = resp.css(".datadisplay tr")[2]
+    if row_16 == nil
+      #self.destroy
+      return
+
+    end
     row_18_nums = row_18.css("td")
     row_16_nums = row_16.css("td")
 

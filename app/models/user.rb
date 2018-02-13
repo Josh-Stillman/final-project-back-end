@@ -27,7 +27,7 @@ class User < ApplicationRecord
 
   def next_month_to_analyze
     if self.transactions != []
-      self.remaining_months_to_analyze > 0 ? self.oldest_month.prev_month : nil
+      self.remaining_months_to_analyze > 0 ? self.oldest_month.prev_month.strftime("%B, %Y") : nil
     end
   end
 
@@ -52,6 +52,18 @@ class User < ApplicationRecord
       date2 = self.newest_month
       remaining_months = (date2.year * 12 + date2.month) - (date1.year * 12 + date1.month) + 1
     end
+  end
+
+  def load_new_month
+    if self.next_month_to_analyze
+      Transaction.batch_analyze_by_month(self.oldest_month.prev_month.year, self.oldest_month.prev_month.month, self.id)
+      if self.oldest_transaction_month < self.oldest_month.prev_month
+        self.oldest_month = self.oldest_month.prev_month
+        self.save
+      end
+    end
+
+    #need to set user data re what months have been analyzed.
   end
   #### - oldest date is Date.parse("November 2017")
   ## newest is Date.parse("November 2017").end_of_month

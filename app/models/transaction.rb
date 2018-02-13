@@ -25,8 +25,8 @@ class Transaction < ApplicationRecord
 
   end
 
-  def self.batch_analyze_by_month(query_year, query_month)
-    my_transactions = Transaction.where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
+  def self.batch_analyze_by_month(query_year, query_month, user_id)
+    my_transactions = Transaction.where(user_id: user_id).where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
 
     my_transactions.each do |transaction|
       transaction.initiate_org_search

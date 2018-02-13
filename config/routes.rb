@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   get 'users/:id/matched', to: "users#matched_transactions"
   get 'users/:id/unmatched', to: "users#unmatched_transactions"
   get 'users/:id/businesses', to: "users#businesses"
+  get 'users/:id/load_new_month', to: "users#load_new_month"
   get 'users/:id', to: "users#show"
 
   post '/login', to: 'authentication#create'
