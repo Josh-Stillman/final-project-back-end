@@ -60,7 +60,11 @@ class Business < ApplicationRecord
     row_18 = resp.css(".datadisplay tr")[1]
     row_16 = resp.css(".datadisplay tr")[2]
     if row_16 == nil
-      #self.destroy
+      self.transactions.each do |t|
+        t.business_id = 1
+        t.save
+      end
+      self.destroy
       return
 
     end
