@@ -26,7 +26,7 @@ class UserSerializer < ActiveModel::Serializer
   end
 
   def business_count
-    object.businesses.length
+    object.businesses.length ? object.businesses.length - 1 : object.businesses.length
   end
 
   def oldest_transaction_month

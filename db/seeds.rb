@@ -25,7 +25,7 @@ CSV.foreach('./db/transactions.csv', headers: true) do |row|
   # i += 1
 
   unless row[4] == "credit"
-    row_date = Date.strptime(row[0], '%m/%d/%Y')
+    row_date = Date.strptime(row[0], '%m/%d/%y')
     row_array = [row_date, row[1], row[2], row[3].to_f, row[5], 1]
     values << row_array
   end

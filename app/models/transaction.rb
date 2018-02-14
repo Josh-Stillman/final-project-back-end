@@ -8,6 +8,9 @@ class Transaction < ApplicationRecord
   belongs_to :user
   belongs_to :business, optional: true
 
+  validates :description, uniqueness: { scope: [:date, :original, :amount] }
+
+
   def self.test_api(start, fin)
     self.all[start..fin].inject([]) do |acc, transaction|
       acc << transaction.query_name_api
@@ -29,7 +32,9 @@ class Transaction < ApplicationRecord
     my_transactions = Transaction.where(user_id: user_id).where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
 
     my_transactions.each do |transaction|
-      transaction.initiate_org_search
+      unless transaction.check_for_already_tagged_transactions(user_id)
+        transaction.initiate_org_search
+      end
 
     end
     #n|
@@ -50,6 +55,21 @@ class Transaction < ApplicationRecord
       puts "already matched"
     end
 
+  end
+
+  def check_for_already_tagged_transactions(user_id)
+      ts = Transaction.where(description: self.description)
+      matches = ts.select do |t| t.business_id != nil end
+      if matches.first
+        my_ts = Transaction.where(description: self.description, user_id: user_id, business_id: nil)
+        my_ts.each do |t|
+          t.business_id = matches.first.business_id
+          t.save
+        end
+        puts "matched all of user's transactions matching description of #{self.description}"
+        return true
+      end
+      return nil
   end
 
   def check_hardcode_dictionary

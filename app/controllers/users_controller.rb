@@ -1,3 +1,7 @@
+require 'activerecord-import'
+require 'csv'
+
+
 class UsersController < ApplicationController
 
   def matched_transactions
@@ -31,7 +35,7 @@ class UsersController < ApplicationController
   def businesses
     me = User.find(params[:id])
     @businesses = me.businesses
-    render json: @businesses.where.not(id: 1), each_serializer: MatchedBusinessSerializer, user_id: 1
+    render json: @businesses.where.not(id: 1), each_serializer: MatchedBusinessSerializer, user_id: params[:id]
   end
 
   def show
@@ -54,7 +58,36 @@ class UsersController < ApplicationController
   end
 
   def import_csv
-    byebug
+    puts "hello, user with id of #{params[:id]}"
+    puts params[:file]
+
+    columns = [:date, :description, :original, :amount, :category, :user_id]
+    values = []
+    # i = 1
+
+    CSV.foreach(params[:file].path, headers: true) do |row|
+      # if i == 3
+      #   break
+      # end
+      # i += 1
+      # row_date = Date.strptime(row[0], '%m/%d/%Y')
+      # puts [row_date, row[1], row[2], row[3].to_f, row[5], 1]
+
+      unless row[4] == "credit"
+        row_date = Date.strptime(row[0], '%m/%d/%y')
+        row_array = [row_date, row[1], row[2], row[3].to_f, row[5], params[:id]]
+        values << row_array
+      end
+      x = User.find(params[:id])
+      x.newest_transaction_month
+    end
+
+    if User.find(params[:id]).transactions == []
+      Transaction.import columns, values, :validate => false
+    else
+      Transaction.import columns, values, :validate => true
+    end
+    render json: {success: true}
   end
 
   private
