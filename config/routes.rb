@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get 'users/:id/unmatched', to: "users#unmatched_transactions"
   get 'users/:id/businesses', to: "users#businesses"
   get 'users/:id/load_new_month', to: "users#load_new_month"
+  post 'users/:id/import_csv', to: "users#import_csv"
   get 'users/:id', to: "users#show"
 
   post '/login', to: 'authentication#create'

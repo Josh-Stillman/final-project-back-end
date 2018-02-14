@@ -53,6 +53,10 @@ class UsersController < ApplicationController
     #render json: @user
   end
 
+  def import_csv
+    byebug
+  end
+
   private
 
   def user_params
