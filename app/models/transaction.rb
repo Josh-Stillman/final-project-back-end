@@ -87,7 +87,8 @@ class Transaction < ApplicationRecord
       #go straight to create entity.
 
     begin
-      api_response = RestClient.get("https://www.opensecrets.org/api/?method=getOrgs&org=#{self.format_name}&apikey=#{Rails.application.secrets.api_key}")
+      api_response = RestClient.get("https://www.opensecrets.org/api/?method=getOrgs&org=#{self.format_name}&apikey=#{ENV['api_key']}")
+      #Rails.application.secrets.api_key
     rescue RestClient::ExceptionWithResponse => e
       api_response = e.response
     end
@@ -159,8 +160,8 @@ class Transaction < ApplicationRecord
     #working
     #https://www.google.com/search?as_q=&as_epq=verizon&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images
     # resp = Nokogiri::HTML(RestClient.get("https://www.google.com/search?as_q=&as_epq=#{self.format_name}&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images"))
-    resp = RestClient.get("https://www.googleapis.com/customsearch/v1?q=#{URI.escape(self.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(self.format_name)}&key=#{Rails.application.secrets.google_api_key}")
-
+    resp = RestClient.get("https://www.googleapis.com/customsearch/v1?q=#{URI.escape(self.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(self.format_name)}&key=#{ENV['google_api_key']}")
+    #Rails.application.secrets.google_api_key
     parsed = JSON.parse(resp)
     if parsed["queries"]["request"][0]["totalResults"]== "0"
       self.no_match
