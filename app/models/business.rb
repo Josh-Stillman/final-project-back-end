@@ -3,7 +3,7 @@ require 'nokogiri'
 class Business < ApplicationRecord
   has_many :transactions
   has_many :cycles
-  after_create :get_2016_and_2018_cycles
+  #after_create :get_2016_and_2018_cycles
 
   def user_total_spending(user_id)
     @user = User.find(user_id)
