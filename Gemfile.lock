@@ -161,6 +161,7 @@ DEPENDENCIES
   json
   jwt
   listen (>= 3.0.5, < 3.2)
+  nokogiri
   pg (~> 0.18)
   puma (~> 3.7)
   rack-cors
@@ -169,9 +170,6 @@ DEPENDENCIES
   spring
   spring-watcher-listen (~> 2.0.0)
   tzinfo-data
-
-RUBY VERSION
-   ruby 2.3.1p112
 
 BUNDLED WITH
    1.15.4
