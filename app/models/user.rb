@@ -7,9 +7,6 @@ class User < ApplicationRecord
 
   def matched_transactions
     Transaction.where(user: self).where.not(business_id: nil).where.not(business_id: 1).where(date: self.oldest_month..self.newest_month)
-
-
-    #between two dates.
   end
 
   def unmatched_transactions
@@ -76,7 +73,7 @@ class User < ApplicationRecord
       end
     else
       Transaction.batch_analyze_by_month(self.newest_transaction_month.year, self.newest_transaction_month.month, self.id)
-    
+
       self.oldest_month = self.newest_transaction_month.beginning_of_month
       self.newest_month = self.newest_transaction_month.end_of_month
       self.save

@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   get 'users/:id/load_new_month', to: "users#load_new_month"
   post 'users/:id/import_csv', to: "users#import_csv"
   get 'users/:id', to: "users#show"
+  post 'users/:id/recategorize', to: "users#recategorize"
 
   post '/login', to: 'authentication#create'
   post '/signup', to: 'users#create'

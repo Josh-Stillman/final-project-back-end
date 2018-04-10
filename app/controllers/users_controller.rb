@@ -32,6 +32,28 @@ class UsersController < ApplicationController
     end
   end
 
+  def recategorize
+
+
+    old_biz = Business.where(org_id: params[:old]).first
+    transactions = old_biz.transactions.where(user_id: params[:id])
+
+    if params[:new] == 1
+      transactions.each do |t|
+        t.business_id = 1
+        t.save
+      end
+    else
+      #create a new business
+      #associate the transactions with that business
+      #populate its cycles
+      #
+    end
+
+
+    render json: {success: true}
+  end
+
   def businesses
     me = User.find(params[:id])
     @businesses = me.businesses

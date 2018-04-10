@@ -8,7 +8,7 @@ class Transaction < ApplicationRecord
   belongs_to :user
   belongs_to :business, optional: true
 
-  validates :description, uniqueness: { scope: [:date, :original, :amount] }
+  #validates :description, uniqueness: { scope: [:date, :original, :amount] }
 
 
   def self.test_api(start, fin)
