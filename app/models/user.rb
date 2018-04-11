@@ -67,7 +67,7 @@ class User < ApplicationRecord
   def load_new_month
     if self.oldest_month
       Transaction.batch_analyze_by_month(self.oldest_month.prev_month.year, self.oldest_month.prev_month.month, self.id)
-      if self.oldest_transaction_month < self.oldest_month.prev_month
+      if self.oldest_transaction_month <= self.oldest_month.prev_month
         self.oldest_month = self.oldest_month.prev_month
         self.save
       end
