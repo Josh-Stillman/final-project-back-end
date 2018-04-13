@@ -7,17 +7,19 @@ module Adapter
 
   class OpenSecrets
 
+    attr_accessor :transaction
+
     def self.test_api(start, fin)
       Transaction.all[start..fin].inject([]) do |acc, transaction|
         acc << transaction.query_name_api
       end
     end
 
-    def constructor(transaction)
+    def initialize(transaction)
       @transaction = transaction
     end
 
-    def initiate_org_search(transaction)
+    def initiate_org_search
       self.query_name_api if @transaction.business_id == nil
     end
 
@@ -41,7 +43,6 @@ module Adapter
           possibilities << [org.attr('orgname'), org.attr('orgid')]
         end
       end
-      #refactor with inject
 
       if possibilities.length == 0
         @transaction.no_api_match
@@ -56,16 +57,12 @@ module Adapter
 
   class GoogleCustomSearch
 
-    def constructor(transaction)
+    def initialize(transaction)
       @transaction = transaction
     end
 
     def google_search_matches
-      #working
-      #https://www.google.com/search?as_q=&as_epq=verizon&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images
-      # resp = Nokogiri::HTML(RestClient.get("https://www.google.com/search?as_q=&as_epq=#{self.format_name}&as_qdr=all&as_sitesearch=https%3A%2F%2Fwww.opensecrets.org%2Forgs%2F&as_occt=any&safe=images"))
       resp = RestClient.get("https://www.googleapis.com/customsearch/v1?q=#{URI.escape(@transaction.format_name)}&cx=010681079516391757268%3A1pvx9xge4gg&exactTerms=#{URI.escape(@transaction.format_name)}&key=#{ENV['google_api_key']}")
-      #Rails.application.secrets.google_api_key
       parsed = JSON.parse(resp)
       if parsed["queries"]["request"][0]["totalResults"]== "0"
         @transaction.no_api_match
