@@ -77,13 +77,8 @@ class User < ApplicationRecord
       self.oldest_month = self.newest_transaction_month.beginning_of_month
       self.newest_month = self.newest_transaction_month.end_of_month
       self.save
-
-      #load the newest month
-      #set the newest month to that month
-      #set the oldest month to that month
     end
 
-    #need to set user data re what months have been analyzed.
   end
   #### - oldest date is Date.parse("November 2017")
   ## newest is Date.parse("November 2017").end_of_month

@@ -19,11 +19,7 @@ class UsersController < ApplicationController
 
   def load_new_month
     me = User.find(params[:id])
-    if me.load_new_month
-      render json: {success: true}
-    else
-      render json: {success: false}
-    end
+    me.load_new_month ? render json: {success: true} : render json: {success: false}
   end
 
   def recategorize
@@ -60,7 +56,6 @@ class UsersController < ApplicationController
   end
 
   def create
-
     @user = User.new(name: params[:username], password: params[:password])
 
     if @user.valid?
@@ -69,25 +64,20 @@ class UsersController < ApplicationController
     else
       render json: {errors: @user.errors.full_messages}
     end
-    #@user.valid? ? render json: @user : render json: @user.errors.messages
-    #render json: @user
   end
 
   def import_csv
-    puts "hello, user with id of #{params[:id]}"
-    puts params[:file]
-
     columns = [:date, :description, :original, :amount, :category, :user_id]
     values = []
-    # i = 1
 
+    ## commented code limits load range
+    # i = 1
     CSV.foreach(params[:file].path, headers: true) do |row|
       # if i == 3
       #   break
       # end
       # i += 1
-      # row_date = Date.strptime(row[0], '%m/%d/%Y')
-      # puts [row_date, row[1], row[2], row[3].to_f, row[5], 1]
+
 
       unless row[4] == "credit"
         row_date = Date.strptime(row[0], '%m/%d/%y')

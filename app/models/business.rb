@@ -5,10 +5,17 @@ class Business < ApplicationRecord
   has_many :cycles
   after_create :get_2016_and_2018_cycles
 
+  def self.populate_cycles
+    self.all.each do |biz|
+      unless biz.id == 1 || biz.cycles != []
+        biz.get_2016_and_2018_cycles
+      end
+    end
+  end
+
   def user_total_spending(user_id)
     @user = User.find(user_id)
     self.transactions.where(user_id: user_id).where(date: @user.oldest_month..@user.newest_month).sum(:amount)
-
   end
 
   def total_dem
@@ -42,41 +49,27 @@ class Business < ApplicationRecord
     end
   end
 
-
-  def self.populate_cycles
-
-    self.all.each do |biz|
-      unless biz.id == 1 || biz.cycles != []
-        biz.get_2016_and_2018_cycles
-      end
-
-      end
-  end
-
-
-
   def get_2016_and_2018_cycles
-    resp = Nokogiri::HTML(RestClient.get("https://www.opensecrets.org/orgs/totals.php?id=#{self.org_id}"))
-    row_18 = resp.css(".datadisplay tr")[1]
-    row_16 = resp.css(".datadisplay tr")[2]
-    if row_16 == nil
-      self.transactions.each do |t|
-        t.business_id = 1
-        t.save
-      end
-      self.destroy
-      return
-
+    data = Adapter::CampaignFinanceScaper.new(self).get_2016_and_2018_cycles
+    if data
+      self.populate_campaign_cycles(data[0], data[1])
+    else
+      self.no_campaign_finance_data
     end
-    row_18_nums = row_18.css("td")
-    row_16_nums = row_16.css("td")
-
-
-    Cycle.create(year: row_18_nums[0].text, total: row_18_nums[1].text.gsub(/\D/, '').to_i, dem_amount: row_18_nums[2].text.gsub(/\D/, '').to_i, rep_amount: row_18_nums[3].text.gsub(/\D/, '').to_i, dem_pct: row_18_nums[4].text.gsub(/\D/, '').to_i, rep_pct: row_18_nums[5].text.gsub(/\D/, '').to_i, business: self)
-
-    Cycle.create(year: row_16_nums[0].text, total: row_16_nums[1].text.gsub(/\D/, '').to_i, dem_amount: row_16_nums[2].text.gsub(/\D/, '').to_i, rep_amount: row_16_nums[3].text.gsub(/\D/, '').to_i, dem_pct: row_16_nums[4].text.gsub(/\D/, '').to_i, rep_pct: row_16_nums[5].text.gsub(/\D/, '').to_i, business: self)
-
-    #scrape description from summary page?  <div class="about_org">
-
   end
+
+  def no_campaign_finance_data
+    self.transactions.each do |t|
+      t.business_id = 1
+      t.save
+    end
+    self.destroy
+  end
+
+  def populate_campaign_cycles(data_2018, data_2016)
+    Cycle.create(year: data_2018[0].text, total: data_2018[1].text.gsub(/\D/, '').to_i, dem_amount: data_2018[2].text.gsub(/\D/, '').to_i, rep_amount: data_2018[3].text.gsub(/\D/, '').to_i, dem_pct: data_2018[4].text.gsub(/\D/, '').to_i, rep_pct: data_2018[5].text.gsub(/\D/, '').to_i, business: self)
+
+    Cycle.create(year: data_2016[0].text, total: data_2016[1].text.gsub(/\D/, '').to_i, dem_amount: data_2016[2].text.gsub(/\D/, '').to_i, rep_amount: data_2016[3].text.gsub(/\D/, '').to_i, dem_pct: data_2016[4].text.gsub(/\D/, '').to_i, rep_pct: data_2016[5].text.gsub(/\D/, '').to_i, business: self)
+  end
+
 end

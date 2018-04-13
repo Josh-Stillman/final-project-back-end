@@ -11,21 +11,6 @@ class Transaction < ApplicationRecord
   ## potentially unnecessary validation:
   #validates :description, uniqueness: { scope: [:date, :original, :amount] }
 
-  def self.associate_all_matching_month_transactions(t_name, biz_id, query_year, query_month)
-    my_transactions = Transaction.where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
-    matching_transactions = my_transactions.where(description: t_name)
-
-    matching_transactions.each do |transaction|
-      transaction.business_id = biz_id
-      transaction.save
-    end
-
-  end
-
-  def format_name
-    self.description.gsub(/.com|\b(LLC|sq|squ|corp|corp.|inc.|inc|co|co.)\b/i, "").encode(Encoding.find('ASCII'), invalid: :replace, undef: :replace, replace: "")
-  end
-
   def self.batch_analyze_by_month(query_year, query_month, user_id)
     my_transactions = Transaction.where(user_id: user_id).where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
 
@@ -37,7 +22,31 @@ class Transaction < ApplicationRecord
     end
   end
 
+  def self.associate_all_matching_month_transactions(t_name, biz_id, query_year, query_month)
+    my_transactions = Transaction.where('extract(year from date) = ? AND extract(month from date) = ?', query_year, query_month)
+    matching_transactions = my_transactions.where(description: t_name)
 
+    matching_transactions.each do |transaction|
+      transaction.business_id = biz_id
+      transaction.save
+    end
+
+  end
+
+  #currently unused version of method above without date restrictions
+  def self.associate_all_matching_transactions_with_business(t_name, biz_id)
+    matching_transactions = Transaction.where(description: t_name)
+
+    matching_transactions.each do |transaction|
+      transaction.business_id = biz_id
+      transaction.save
+    end
+
+  end
+
+  def format_name
+    self.description.gsub(/.com|\b(LLC|sq|squ|corp|corp.|inc.|inc|co|co.)\b/i, "").encode(Encoding.find('ASCII'), invalid: :replace, undef: :replace, replace: "")
+  end
 
   def check_for_already_tagged_transactions(user_id)
       ts = Transaction.where(description: self.description)
@@ -69,14 +78,6 @@ class Transaction < ApplicationRecord
     Transaction.associate_all_matching_month_transactions(self.description, newBiz.id, self.date.year, self.date.month)
   end
 
-  def self.associate_all_matching_transactions_with_business(t_name, biz_id)
-    matching_transactions = Transaction.where(description: t_name)
 
-    matching_transactions.each do |transaction|
-      transaction.business_id = biz_id
-      transaction.save
-    end
-
-  end
 
 end

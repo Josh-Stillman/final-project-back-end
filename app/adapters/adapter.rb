@@ -66,10 +66,10 @@ module Adapter
       parsed = JSON.parse(resp)
       if parsed["queries"]["request"][0]["totalResults"]== "0"
         @transaction.no_api_match
-        puts "no match"
+        #puts "no match"
       else
-        puts parsed["items"][0]["title"].gsub(/:.*/, "")
-        puts parsed["items"][0]["link"].gsub(/http.*id=|&cycle=.*/, "")
+        #puts parsed["items"][0]["title"].gsub(/:.*/, "")
+        #puts parsed["items"][0]["link"].gsub(/http.*id=|&cycle=.*/, "")
         @transaction.successful_api_match([parsed["items"][0]["title"].gsub(/:.*/, ""), parsed["items"][0]["link"].gsub(/http.*id=|&cycle=.*/, "") ])
       end
     end
@@ -77,6 +77,17 @@ module Adapter
   end
 
   class CampaignFinanceScaper
+
+    def initialize(business)
+      @business = business
+    end
+
+    def get_2016_and_2018_cycles
+      resp = Nokogiri::HTML(RestClient.get("https://www.opensecrets.org/orgs/totals.php?id=#{@business.org_id}"))
+      row_18 = resp.css(".datadisplay tr")[1]
+      row_16 = resp.css(".datadisplay tr")[2]
+      row_16 == nil ? nil : [row_18.css("td"), row_16.css("td")]
+    end
 
   end
 
