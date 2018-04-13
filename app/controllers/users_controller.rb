@@ -5,12 +5,6 @@ require 'csv'
 class UsersController < ApplicationController
 
   def matched_transactions
-    #filter transactions by user
-    #filter transactions by analyzed months -- model method to return this array
-    #subsequent model method to spit out matched transactions.
-
-    #also need to get the business for each matched transaction
-    #then include nested business
     me = User.find(params[:id])
     @transactions = me.matched_transactions
     render json: @transactions.order(date: :desc), user_id: params[:id]
