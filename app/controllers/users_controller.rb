@@ -19,7 +19,11 @@ class UsersController < ApplicationController
 
   def load_new_month
     me = User.find(params[:id])
-    me.load_new_month ? render json: {success: true} : render json: {success: false}
+    if me.load_new_month
+      render json: {success: true}
+    else
+      render json: {success: false}
+    end
   end
 
   def recategorize
