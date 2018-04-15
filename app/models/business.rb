@@ -51,11 +51,7 @@ class Business < ApplicationRecord
 
   def get_2016_and_2018_cycles
     data = Adapter::CampaignFinanceScaper.new(self).get_2016_and_2018_cycles
-    if data
-      self.populate_campaign_cycles(data[0], data[1])
-    else
-      self.no_campaign_finance_data
-    end
+    data ? self.populate_campaign_cycles(data[0], data[1]) : self.no_campaign_finance_data
   end
 
   def no_campaign_finance_data
