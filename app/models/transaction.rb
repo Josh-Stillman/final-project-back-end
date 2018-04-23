@@ -16,7 +16,6 @@ class Transaction < ApplicationRecord
 
     my_transactions.each do |transaction|
       unless transaction.check_for_already_tagged_transactions(user_id)
-        #transaction.initiate_org_search
         Adapter::OpenSecrets.new(transaction).initiate_org_search
       end
     end
